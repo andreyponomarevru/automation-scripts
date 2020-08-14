@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# ###################################################################
+# Split FLAC using CUE or 
+# convert APE to FLAC and split FLAC using CUE
+# ###################################################################
+#
+# Concerning the subject of quality loss while ecoding/decoding:
+# https://superuser.com/questions/447338/understanding-conversion-and-decompression-of-lossless-audio
+#
+# How to use: 
+#
+# always run script in the folder containing source files 
+# (i.e. don't provide paths as arguments, pass only file names).
+#
+# - to split FLAC:
+#   `script "Pete Namlook & Dr. Atmo ‎– Silence.flac" \
+#           "Pete Namlook & Dr. Atmo ‎– Silence.cue"`
+#
+# - to convert APE to FLAC and split:
+#   `script Pete Namlook & Dr. Atmo ‎– Silence.ape \
+#           Pete Namlook & Dr. Atmo ‎– Silence.wav \
+#           Pete Namlook & Dr. Atmo ‎– Silence.cue`
+#
+# ####################################################################
+
+# exit on error (https://stackoverflow.com/questions/2870992/automatic-exit-from-bash-shell-script-on-error)
+set -e 
+
+dependencies=( "ffmpeg" "iconv" "shnsplit" "flac" "cuetag")
+
+for i in "${dependencies[@]}"; do
+  if ! command -v $i &> /dev/null; then 
+    echo "${i} required" && exit 1
+  fi
+done
+
+
+
+INPUT_FILE="$1"
+# Extract file extension
+INPUT_FILE_extension="${INPUT_FILE##*.}"
+
+
+
+#
+# Handle FLAC source files
+#
+if [ "$INPUT_FILE_extension" = "flac" ]; then
+  CUE_FILE="$2"
+
+  # Split FLAC using CUE and delete source FLAC and CUE
+  shnsplit -f "$CUE_FILE" -t "%n. %p - %t" -o flac "$INPUT_FILE"
+  # copy ID3v2 tags from CUE to each file
+  cuetag "$CUE_FILE" [[:digit:]]*.flac 
+
+  #
+  # Cleanup
+  #
+  echo "-----------------------------------------"
+  read -p "Delete FLAC and CUE source files \
+           $(echo && echo $(ls --color=yes "$INPUT_FILE") && \
+                     echo $(ls --color=yes "$CUE_FILE"))?" -n 1
+  echo 
+
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo
+    rm --verbose "$INPUT_FILE" "$CUE_FILE"
+  fi
+  echo 
+
+
+
+#
+# Handle APE source files
+#
+else
+  INPUT_FILE="$1"
+  WAV_FILE="$2"
+  CUE_FILE="$3"
+  echo
+  echo $INPUT_FILE
+  echo $WAV_FILE
+  echo $CUE_FILE
+  echo
+  # Convert APE to WAV and delete APE
+  ffmpeg -i "$INPUT_FILE" "$WAV_FILE"
+  echo "-----------------------------------------"
+  echo "File $(ls --color=yes "$WAV_FILE") created"
+  echo
+
+  # Split WAV using CUE and delete WAV
+  iconv -f Latin1 -t UTF-8 "$CUE_FILE" | shnsplit -t "%n. %p - %t" "$WAV_FILE"
+  echo "-----------------------------------------"
+  read -p "Delete WAV source file $(ls --color=yes "$WAV_FILE")?" -n 1
+  echo 
+
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo
+    rm --verbose "$WAV_FILE"
+  fi
+  echo 
+
+  # Convert to FLAC
+  flac [[:digit:]]*.wav
+  # copy ID3v2 tags from CUE to each file
+  cuetag "$CUE_FILE" [[:digit:]]*.flac 
+
+  #
+  # Cleanup
+  #
+  echo "-----------------------------------------"
+  read -p "Delete all WAV source files? \
+           $(echo && echo && ls --color=yes [[:digit:]]*.wav)" -n 1
+  echo 
+
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo
+    rm --verbose [[:digit:]]*.wav
+  fi
+  echo 
+
+  echo "-----------------------------------------"
+  read -p "Delete APE and CUE source files? $(echo && \
+           echo $(ls --color=yes "$INPUT_FILE") && \
+           echo $(ls --color=yes "$CUE_FILE"))?" -n 1
+  echo
+
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo
+    rm --verbose "$INPUT_FILE" "$CUE_FILE"
+  fi
+  echo
+
+fi
+
+
+
+#
+# Otput results
+#
+echo "-----------------------------------------"
+ls -l --color=yes .
+
+echo "-----------------------------------------"
+echo Done
