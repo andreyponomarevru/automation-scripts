@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# 
+# DESCRIPTION
+#     Backup all .env files from all projects to Dropbox, preserving 
+#     directory structure 
+#
+# SYNTAX
+#     sudo <path to directory containing .env files> \
+#     [...path to directory containing .env files]
+#
+#     - example: ./script /mnt/v9dfds8er5/directory-containing-env-files \
+#                         /mnt/d87sar45aer/directory-containing-env-files
+#
+# NOTES
+#     - always run the script with `sudo`
+#
+#     - the script requires DROPBOX_ACCESS_TOKEN environment variable,
+#       set it in /etc/environment.
+#       You can get a new Dropbox access token here: https://www.dropbox.com/developers/apps/info/9lxu6ofw4bivuw2#settings
+#
+
+set -eu 
+DROPBOX_URL="https://content.dropboxapi.com/2/files/upload"
+archive_dir="backup-env-files-$(date -I)"
+
+if [[ -z "${DROPBOX_ACCESS_TOKEN}" ]]; then
+  echo "The environment variable DROPBOX_ACCESS_TOKEN is not set"
+  exit 1
+fi
+
+
+
+#
+# Create archive
+#
+mkdir $archive_dir
+
+for dir in "$@"
+do
+  find "$dir" \
+  -name "*.env" -exec \
+    cp --parents \{\} "./$archive_dir" \;
+done
+
+tar --create \
+    --gzip  \
+    --file $archive_dir.tar.gz ./$archive_dir \
+    --remove-files
+
+
+
+#
+# Upload to Dropbox
+#
+
+curl --request POST \
+     --url "$DROPBOX_URL" \
+     --header "Authorization: Bearer "${DROPBOX_ACCESS_TOKEN}"" \
+     --header "Dropbox-API-Arg: {\"path\": \"/$archive_dir.tar.gz\",\"mode\": \"add\",\"autorename\": true,\"mute\": false,\"strict_conflict\": false}" \
+     --header "Content-Type: application/octet-stream" \
+     --data-binary @$archive_dir.tar.gz
+
+
+
+#
+# Cleanup
+#
+rm ./$archive_dir.tar.gz 
+
+
+
+echo
+echo "Done"
+
+
+
+
