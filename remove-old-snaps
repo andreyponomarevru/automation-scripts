@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# ###################################################################
-# Removes old revisions of snaps
-# ###################################################################
 #
-# How to use:
-# - close all snaps before running this
+# DESCRIPTION
+#     Removes old revisions of snaps
+# 
+# NOTES
+#     - close all snaps before running this
 #
-#####################################################################
 
 set -eu
 

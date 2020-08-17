@@ -2,15 +2,14 @@
 
 # 
 # DESCRIPTION
-#     Backup all .env files from all projects to Dropbox, preserving 
-#     directory structure 
+#     Backs up arbitrary files to Dropbox, preserving directory structure
 #
 # SYNTAX
-#     sudo <path to directory containing .env files> \
-#     [...path to directory containing .env files]
+#     sudo <path to file> \
+#     [...path to file]
 #
-#     - example: ./script /mnt/v9dfds8er5/directory-containing-env-files \
-#                         /mnt/d87sar45aer/directory-containing-env-files
+#     - example: ./script /mnt/v9dfds8er5/001.txt \
+#                         /mnt/d87sar45aer/photo.jpg
 #
 # NOTES
 #     - always run the script with `sudo`
@@ -22,7 +21,7 @@
 
 set -eu 
 DROPBOX_URL="https://content.dropboxapi.com/2/files/upload"
-archive_dir="backup-env-files-$(date -I)"
+archive_dir="backup-arbitrary-files-$(date -I)"
 
 if [[ -z "${DROPBOX_ACCESS_TOKEN}" ]]; then
   echo "The environment variable DROPBOX_ACCESS_TOKEN is not set"
@@ -36,18 +35,15 @@ fi
 #
 mkdir $archive_dir
 
-for dir in "$@"
+for file in "$@"
 do
-  find "$dir" \
-  -name "*.env" -exec \
-    cp --parents \{\} "./$archive_dir" \;
+  cp --parents "$file" "./$archive_dir"
 done
 
 tar --create \
     --gzip  \
     --file $archive_dir.tar.gz ./$archive_dir \
     --remove-files
-
 
 
 #
@@ -72,7 +68,3 @@ rm ./$archive_dir.tar.gz
 
 echo
 echo "Done"
-
-
-
-

@@ -2,7 +2,8 @@
 
 #
 # DESCRIPTION
-#     Split FLAC using CUE or convert APE > WAV > FLAC and split FLAC using CUE
+#     Splits FLAC using CUE or converts APE > WAV > FLAC and splits FLAC using
+#     CUE. Preserves all ID3v2 tag information from original files
 #
 # SYNTAX 
 #     - to split FLAC: 
