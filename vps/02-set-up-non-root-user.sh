@@ -30,7 +30,13 @@
 #     Always run this script with root permissions (i.e. log in as "root"
 #     or use "sudo" before the script name)
 #
-#     1. Copy this script to VPS: "scp ./script root@192.168.3.10:/"
+#     1. Copy this script to VPS: 
+#        rsync \
+#          --progress \
+#          --verbose \
+#          --archive \
+#          --rsh=ssh \
+#        ./script "root@192.168.3.10:/"
 #
 #     3. Execute the scrip
 #
