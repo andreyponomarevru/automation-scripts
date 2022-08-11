@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#
 # DESCRIPTION
 #     Create self-signed SSL certificate.
 #     The script is for local development environment!
@@ -8,7 +7,6 @@
 # SYNTAX 
 #       <server name> <output path>
 #     - example: ./script test.com ./nginx/certs
-#
 
 set -eu
 
