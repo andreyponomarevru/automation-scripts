@@ -1,0 +1,13 @@
+#!/bin/bash
+
+WIDTH="$1"
+HEIGHT="$2"
+
+montage \
+  -resize "${WIDTH}x${HEIGHT}" \
+  -geometry +0+0 \
+  -background transparent \
+  -quality 100 \
+  -tile 12x \
+  ./*.jpg \
+  ./tile.jpg

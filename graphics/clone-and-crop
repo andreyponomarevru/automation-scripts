@@ -1,0 +1,22 @@
+#!/bin/bash
+
+IMG_PATH="$1"
+
+# Clone
+
+montage \
+  "${IMG_PATH}" "${IMG_PATH}" \
+  -tile 2x1 \
+  -geometry +0+0 \
+  -quality 100 \
+  ./cloned.jpg
+
+# Crop cloned
+
+convert \
+  -resize x1600 \
+  -crop 600x600+0+0 \
+  -gravity west \
+  -quality 100 \
+  ./cloned.jpg \
+  ./cloned-and-croped.jpg
