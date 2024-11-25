@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Music player
+
+# Install
+sudo apt install -y quodlibet
+
+# Uninstall
+sudo apt remove -y quodlibet
