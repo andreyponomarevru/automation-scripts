@@ -28,7 +28,7 @@ sudo journalctl --rotate
 # Make all journal files contain no data older than 2days:
 sudo journalctl --vacuum-time=2d
 # Remove mail server logs
-sudo > /var/log/mail.log
+sudo rm /var/log/mail.log
 
 printf '\- Removing APT cache ...\n'
 sudo du -c --summarize --human-readable --total /var/cache/apt
