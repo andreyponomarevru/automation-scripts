@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# DESCRIPTION
+#     Backup and compress Postgres database running in Docker container
+#
+# SYNTAX
+#     ./script <docker db container ID>  <dir to dump to>
+
+# The script assumes you have two containers: Wordpress and MySQL.
+#
+# You need to backup the *database* (all your users, posts, categories, tags, etc.), and the *site data* (your themes, plugins, uploaded media, etc.).
+
+set -eu -o pipefail
+
+DUMP_FILENAME_PREFIX="$1"
+CONTAINER_NAME="$2"
+DB_USERNAME="$3"
+
+printf '\n1. Backup MySQL database.\n'
+
+docker exec "$(docker ps -aqf "name=^$CONTAINER_NAME")" \
+  mysqldump \
+    --add-drop-table \
+    -u "$DB_USERNAME" \
+    -p  \
+    wordpress \
+  > "${HOME}/${DUMP_FILENAME_PREFIX}_mysql-dump_$(date +'%Y_%m_%d').sql" \
+  | gzip --to-stdout > wordpress-blog.sql.gz
+
+
+
+
+
+
+docker exec "$(docker ps -aqf "name=^$DB_NAME")" \
+  pg_dumpall \
+    --clean \
+    --username="$DB_USERNAME" \
+  > "${HOME}/${DUMP_FILENAME_PREFIX}_postgres-dump_$(date +'%Y_%m_%d').sql"
+ 
+printf '\n2. Backup Wordpress data.\n'
+
+
