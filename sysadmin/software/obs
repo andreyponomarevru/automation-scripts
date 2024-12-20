@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# OBS - Open Broadcaster Software (video Streaming, screencasting)
+
 # Install
 sudo add-apt-repository ppa:obsproject/obs-studio
 sudo apt update

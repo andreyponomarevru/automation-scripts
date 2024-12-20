@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# SYNOPSIS
+#     script <number of files> 
+#
+# DESCRIPTION
+#     Recursevely find directories containing less than or equal to the 
+#     specified number of files. If not specified, the default number is 3
+
+set -eu -o pipefail
+
+# Read the first arg (1). If not provided, assign the value '3'
+TRACKS_COUNT="${1:-3}"
+
+find . \
+  -type d \
+  -exec bash \
+  -c 'echo -ne "{} "; ls "{}" | wc -l' \; | \
+awk "\$NF<=$TRACKS_COUNT"

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# SYNOPSIS
+#     clone-and-crop [FILE] [GRAVITY]
+#
+# DESCRIPTION
+#     [GRAVITY] - default is 'center'
+
+IMG_PATH="$1"
+GRAVITY="${2:-center}"
+
+FILE_NAME="$(basename -- "$1")"
+EXTENSION="${FILE_NAME##*.}"
+NAME="${FILE_NAME%.*}"
+
+D="$(convert "$1" -format "%[fx:w<h?w:h]" info:)"
+convert "$1" -gravity "$GRAVITY" -extent "${D}x${D}" "./${NAME}_${D}x${D}.$EXTENSION"
