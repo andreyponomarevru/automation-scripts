@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# vCard Studio (Android contacts editor/viewer)
+
+sudo snap install vcard-studio
+
+sudo snap remove vcard-studio
