@@ -1,0 +1,55 @@
+#!/bin/bash
+
+#
+# Backup files from VPS to local machine
+#
+# This script will copy/sync files and dirs listed in .txt files
+# from VPS to local machine.
+#
+
+set -eu -o pipefail
+
+# printenv
+# printf '\n\n'
+# set -x
+
+LOCAL_BACKUP_DIR="$HOME/vps-backup/backup-vps-settings"
+
+CONNECT_OVER_SSH="ssh -p 22 -i $HOME/.ssh/id_rsa"
+VPS="$VPS_USER_SIMPLECLOUD@$VPS_IP_SIMPLECLOUD"
+
+FILES_TO_BACKUP_NGINX="/mnt/9904b8b1-2f58-4bc1-a5de-aa1584088b5e/automation-scripts/vps/backup-vps-settings/files-to-backup_nginx.txt"
+FILES_TO_BACKUP_SSH="/mnt/9904b8b1-2f58-4bc1-a5de-aa1584088b5e/automation-scripts/vps/backup-vps-settings/files-to-backup_ssh.txt"
+
+printf '\n*** VPS Backup (%s) ***\n' "$(date | tr --squeeze-repeats ' ')"
+printf '\n1. Backup Nginx Settings and static content.\n'
+
+mkdir -p "$LOCAL_BACKUP_DIR"
+
+# Connect to VPS over SSH and copy Nginx files listed in external file to local machine
+rsync \
+  --archive \
+  --verbose \
+  --compress \
+  --progress \
+  --recursive \
+  -e "$CONNECT_OVER_SSH" \
+  "$VPS:/" \
+  "${LOCAL_BACKUP_DIR}/nginx/" \
+  --files-from="$FILES_TO_BACKUP_NGINX"
+
+printf '\n2. Backup SSH settings.\n'
+
+# Connect to VPS over SSH and copy SSH files listed in external file to local machine
+rsync \
+  --archive \
+  --verbose \
+  --compress \
+  --progress \
+  --recursive \
+  -e "$CONNECT_OVER_SSH" \
+  "$VPS:/" \
+  "${LOCAL_BACKUP_DIR}/ssh/" \
+  --files-from="$FILES_TO_BACKUP_SSH"
+
+printf '\n---------------------- Backed up successfully ----------------------\n\n'

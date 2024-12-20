@@ -1,0 +1,6 @@
+/etc/nginx/nginx.conf
+/etc/nginx/conf.d/
+/etc/nginx/snippets/
+/var/www/html/
+/usr/share/nginx/html
+

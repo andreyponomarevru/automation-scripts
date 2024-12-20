@@ -1,0 +1,49 @@
+#!/bin/bash
+
+#
+# Backup files from VPS to local machine
+#
+# This script will copy/sync files and dirs listed in .txt files
+# from VPS to local machine.
+#
+
+set -eu -o pipefail
+
+# printenv
+# printf '\n\n'
+# set -x
+
+LOCAL_BACKUP_DIR="$HOME/vps-backup"
+CONNECT_OVER_SSH="ssh -p 22 -i $HOME/.ssh/id_rsa"
+VPS="$VPS_USER_SIMPLECLOUD@$VPS_IP_SIMPLECLOUD"
+
+printf '\n1. Backup Postgres in Docker.\n'
+
+LOCAL_BACKUP_DIR_LIVESTREAMER="$HOME/vps-backup/livestreamer/"
+POSTGRES_BACKUP_SCRIPT_PATH="/mnt/9904b8b1-2f58-4bc1-a5de-aa1584088b5e/automation-scripts/vps/backup-livestreamer/helper_backup-postgres-db-inside-docker"
+
+printf '\n1. Copy db backup script to VPS.\n'
+rsync \
+  --archive \
+  --verbose \
+  --progress \
+  --rsh=ssh \
+  "$POSTGRES_BACKUP_SCRIPT_PATH" \
+  "$VPS_USER_SIMPLECLOUD@$VPS_IP_SIMPLECLOUD:~/"
+
+printf '\n2. Execute db backup scripts on VPS.\n'
+
+ssh "$VPS" "\$HOME/\$(basename $POSTGRES_BACKUP_SCRIPT_PATH) livestreamer db streamer && exit"
+
+printf '\n3. Copy db dump to local machine.\n'
+
+rsync \
+  --archive \
+  --verbose \
+  --compress \
+  --progress \
+  --rsh="$CONNECT_OVER_SSH" \
+  "$VPS:~/*$(date +"%Y_%m_%d").sql" \
+  "$LOCAL_BACKUP_DIR_LIVESTREAMER"
+
+printf '\n---------------------- Backed up successfully ----------------------\n\n'

@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# DESCRIPTION
+#     Backup and compress Postgres database running in Docker container
+#
+# SYNTAX
+#     ./script <docker db container ID>  <dir to dump to>
+
+# The script assumes you have two containers: Wordpress and MySQL.
+#
+# You need to backup the *database* (all your users, posts, categories, tags, etc.), and the *site data* (your themes, plugins, uploaded media, etc.).
+#
+# See the root password and other credentials in docker-compose.yml 
+
+set -eu -o pipefail
+
+VPS="$VPS_USER_SIMPLECLOUD@$VPS_IP_SIMPLECLOUD"
+MYSQL_BACKUP_SCRIPT_NAME="helper_backup-mysql-db-inside-docker"
+CONNECT_OVER_SSH="ssh -p 22 -i $HOME/.ssh/id_rsa"
+LOCAL_BACKUP_DIR="$HOME/vps-backup/wordpress-blog/"
+
+printf '1. Backup MySQL in Docker.\n'
+printf '\n1.1. Copy db backup script to VPS.\n'
+rsync \
+  --archive \
+  --verbose \
+  --progress \
+  --rsh=ssh \
+  "/mnt/9904b8b1-2f58-4bc1-a5de-aa1584088b5e/automation-scripts/vps/backup-wordpress-blog/$MYSQL_BACKUP_SCRIPT_NAME" \
+  "$VPS_USER_SIMPLECLOUD@$VPS_IP_SIMPLECLOUD:~/"
+
+printf '\n1.2. Execute db backup scripts on VPS.\n'
+
+POSTGRES_BACKUP_SCRIPT_PATH="./$MYSQL_BACKUP_SCRIPT_NAME"
+ssh "$VPS" "\$HOME/\$(basename $POSTGRES_BACKUP_SCRIPT_PATH) wp_db andreyponomarevru_wordpress root fg57gfds1e && exit"
+
+printf '\n1.3. Copy db dump to local machine.\n'
+rsync \
+  --archive \
+  --verbose \
+  --compress \
+  --progress \
+  --rsh="$CONNECT_OVER_SSH" \
+  "$VPS:~/*.gz" \
+  "$LOCAL_BACKUP_DIR"
+
+printf '\n2. Backup Wordpress data.\n'
+
+ARCHIVE_NAME="blog_wp_data_$(date +'%Y_%m_%d').tar.gz"
+ssh "$VPS" "\
+  tar \
+    --create \
+    --gzip \
+    --file="$ARCHIVE_NAME" \
+    ~/blog/wp_data && \
+  exit \
+"
+rsync \
+  --archive \
+  --verbose \
+  --compress \
+  --progress \
+  --remove-source-files \
+  --rsh="$CONNECT_OVER_SSH" \
+  "$VPS:~/$ARCHIVE_NAME" \
+  "$LOCAL_BACKUP_DIR"
+
+# Remove yesterday's backup from server to free up space
+ssh -v "$VPS" "\
+  find "/home/$VPS_USER_SIMPLECLOUD" -type f -name "blog_wp_data_$(date -d 'yesterday' +'%Y_%m_%d').tar.gz" | xargs rm -rf  \
+"
+
+printf '\n---------------------- Backed up successfully ----------------------\n\n'

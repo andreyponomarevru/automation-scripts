@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# DESCRIPTION
+#     Backup and compress Postgres database running in Docker container
+#
+# SYNTAX
+#     ./script <docker db container ID>  <dir to dump to>
+
+# DO NOT RUN THIS SCRIPT MANUALLY. IT SHOULD BE CALLED ONLY BY backup-wordpress-inside-docker SCRIPT
+
+set -eu -o pipefail
+
+CONTAINER_NAME="$1"
+DB_NAME="$2"
+DB_USERNAME="$3"
+DB_PASSWORD="$4"
+DB_DUMP_NAME_PREFIX="blog_mysql-dump"
+TODAY_DATE="$(date +'%Y_%m_%d')"
+
+docker exec "$(docker ps -aqf "name=^$CONTAINER_NAME")" \
+  mysqldump \
+    --add-drop-table \
+    --user="$DB_USERNAME" \
+    --password="$DB_PASSWORD" \
+    --databases "$DB_NAME" \
+  > "${HOME}/${DB_DUMP_NAME_PREFIX}_${TODAY_DATE}.sql"
+
+# '--force' is useful when .gz file already exists, to overwrite it
+gzip --force "${HOME}/${DB_DUMP_NAME_PREFIX}_${TODAY_DATE}.sql"
+
+# Remove yesterday's backup from server to free up space
+find "${HOME}" -type f -name "${DB_DUMP_NAME_PREFIX}_$(date -d 'yesterday' +'%Y_%m_%d').sql" | xargs rm -rf 
