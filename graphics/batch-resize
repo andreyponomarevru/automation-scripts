@@ -1,13 +1,13 @@
 #!/bin/bash
 
-WIDTH="$1"
-HEIGHT="$2"
+WIDTH="${1:-500}"
+HEIGHT="${2:-500}"
 
-mkdir ./resized
+mkdir --parent "$PWD/resized"
 mogrify \
   -resize "${WIDTH}x${HEIGHT}" \
   -gravity center \
-  -extent "$(expr "$WIDTH" + 100)x$(expr "$HEIGHT" + 100)" \
+  -transparent white \
   -density 300 \
   -quality 100 \
-  -path ./resized ./*.jpg
+  -path ./resized "$PWD/*.jpg"
