@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#
+# DESCRIPTION
+#     Generate word frequence list from a text-based format e.g. .srt (movie subtitles) and save it to text file.
+#     The output looks as follows:
+#     617 the
+#     355 I
+#     ...
+#     3 grew
+#     2 grid
+#     1 press
+#     1 lie
+#
+# SYNOPSIS
+#       <path to text-based file format>
+#     - example: ./script ./mission_impossible/sub/sub_en.srt
+#
+
+set -eu -o pipefail
+
+PATH_TO_TEXT_FILE="$1"
+
+FILENAME=$(basename -- "$PATH_TO_TEXT_FILE")
+FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+
+grep \
+  --extended-regexp '\w+' \
+  "$PATH_TO_TEXT_FILE" |
+  tr -cs 'a-zA-Z' '\n' |
+  sort |
+  uniq --count |
+  sort --numeric-sort --reverse > \
+    "$(dirname "$PATH_TO_TEXT_FILE")/${FILENAME_WITHOUT_EXT}_words.txt"
